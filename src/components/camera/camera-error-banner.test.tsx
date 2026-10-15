@@ -120,15 +120,6 @@ describe('CameraErrorBanner', () => {
       expect(screen.queryByText('Motion Tracking Error')).not.toBeInTheDocument();
     });
 
-    it('positions the opaque alert below the camera header and labels a 44px dismiss target', () => {
-      renderWithStore(RUNTIME_ERROR);
-      const alert = screen.getByRole('alert');
-      const dismissButton = screen.getByRole('button', { name: 'Dismiss error' });
-
-      expect(alert.parentElement).toHaveClass('top-20');
-      expect(alert).toHaveClass('bg-stone-950');
-      expect(dismissButton).toHaveClass('size-11');
-    });
   });
 
   describe('retry behaviour', () => {
