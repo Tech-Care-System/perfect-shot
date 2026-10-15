@@ -1,0 +1,56 @@
+# Workflow Status - ai-perfect-shot
+project: "ai-perfect-shot"
+project_type: "greenfield"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: "_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+
+workflow_status:
+  - phase: 1
+    name: "Analysis (Optional)"
+    workflows:
+      - id: "brainstorm-project"
+        status: "completed"
+        agent: "analyst"
+        command: "/bmad:bmm:workflows:brainstorming"
+      - id: "product-brief"
+        status: "completed"
+        agent: "analyst"
+        command: "/bmad:bmm:workflows:create-product-brief"
+  - phase: 2
+    name: "Planning"
+    workflows:
+      - id: "prd"
+        status: "completed"
+        agent: "pm"
+        command: "/bmad:bmm:workflows:create-prd"
+      - id: "create-ux-design"
+        status: "completed"
+        agent: "ux-designer"
+        command: "/bmad:bmm:workflows:create-ux-design"
+  - phase: 3
+    name: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "completed"
+        agent: "architect"
+        command: "/bmad:bmm:workflows:create-architecture"
+      - id: "create-epics-and-stories"
+        status: "completed"
+        agent: "pm"
+        command: "/bmad:bmm:workflows:create-epics-and-stories"
+      - id: "test-design"
+        status: "completed"
+        agent: "tea"
+        command: "/bmad:bmm:workflows:test-design"
+      - id: "implementation-readiness"
+        status: "completed"
+        agent: "architect"
+        command: "/bmad:bmm:workflows:implementation-readiness"
+  - phase: 4
+    name: "Implementation"
+    workflows:
+      - id: "sprint-planning"
+        status: "completed"
+        agent: "sm"
+        command: "/bmad:bmm:workflows:sprint-planning"

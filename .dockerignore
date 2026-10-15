@@ -1,0 +1,30 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (reinstalled inside Docker)
+node_modules
+
+# Next.js build output (built inside Docker)
+.next
+out
+build
+
+# Agent / docs / tooling (not needed at runtime)
+.agent
+_bmad
+_bmad-output
+docs
+playwright-report
+test-results
+coverage
+
+# Local env files — inject secrets at runtime, never bake into image
+.env
+.env.*
+!.env.example
+
+# Editor & OS artifacts
+.DS_Store
+*.pem
+*.tsbuildinfo
