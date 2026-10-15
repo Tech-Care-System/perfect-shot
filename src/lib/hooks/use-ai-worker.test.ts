@@ -77,6 +77,27 @@ describe('useAIWorker', () => {
     expect(instance.terminate).toHaveBeenCalled();
   });
 
+  it('does not create a worker if unmounted before deferred initialization', () => {
+    const { unmount } = renderHook(() => useAIWorker());
+
+    unmount();
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+
+    expect(workerFactory).not.toHaveBeenCalled();
+  });
+
+  it('starts only one worker when StrictMode replays the initialization effect', () => {
+    renderHook(() => useAIWorker(), { reactStrictMode: true });
+
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+
+    expect(workerFactory).toHaveBeenCalledTimes(1);
+  });
+
   it('transitions to error state when worker fires onerror', async () => {
     const silentFactory = jest.fn(() => {
       const worker = new MockWorker();
@@ -150,7 +171,37 @@ describe('useAIWorker', () => {
     expect(result.current.error).toBe('Worker is not initialized');
   });
 
-  it('transitions to error state on INIT timeout', () => {
+  it('does not time out while MediaPipe is still initializing after five seconds', () => {
+    const silentFactory = jest.fn(() => {
+      const worker = new MockWorker();
+      worker.postMessage = jest.fn();
+      return worker;
+    });
+    (global as typeof global & { Worker: typeof Worker }).Worker =
+      silentFactory as unknown as typeof Worker;
+
+    const { result } = renderHook(() => useAIWorker());
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+    const instance = silentFactory.mock.results[0].value as MockWorker;
+
+    act(() => {
+      jest.advanceTimersByTime(5_000);
+    });
+
+    expect(result.current.workerStatus).toBe('loading');
+    expect(result.current.error).toBeNull();
+
+    act(() => {
+      instance.onmessage?.({ data: { type: 'READY' } } as MessageEvent);
+    });
+
+    expect(result.current.workerStatus).toBe('ready');
+    expect(result.current.error).toBeNull();
+  });
+
+  it('transitions to error state on the extended INIT timeout', () => {
     const silentFactory = jest.fn(() => {
       const worker = new MockWorker();
       worker.postMessage = jest.fn(); // Never replies READY
@@ -164,11 +215,75 @@ describe('useAIWorker', () => {
     expect(result.current.workerStatus).toBe('loading');
 
     act(() => {
-      jest.advanceTimersByTime(5_000);
+      jest.advanceTimersByTime(15_000);
     });
 
     expect(result.current.workerStatus).toBe('error');
     expect(result.current.error).toBe('Worker initialization timed out');
+  });
+
+  it('restarts cleanly after an INIT timeout and accepts READY from the replacement worker', () => {
+    const instances: MockWorker[] = [];
+    const silentFactory = jest.fn(() => {
+      const worker = new MockWorker();
+      worker.postMessage = jest.fn();
+      instances.push(worker);
+      return worker;
+    });
+    (global as typeof global & { Worker: typeof Worker }).Worker =
+      silentFactory as unknown as typeof Worker;
+
+    const { result } = renderHook(() => useAIWorker());
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(15_000);
+    });
+    expect(result.current.workerStatus).toBe('error');
+
+    act(() => {
+      result.current.restartWorker();
+    });
+    const replacement = instances[1];
+    expect(instances).toHaveLength(2);
+    expect(instances[0].terminate).toHaveBeenCalled();
+    expect(result.current.workerStatus).toBe('loading');
+
+    act(() => {
+      replacement.onmessage?.({ data: { type: 'READY' } } as MessageEvent);
+      jest.advanceTimersByTime(15_000);
+    });
+
+    expect(result.current.workerStatus).toBe('ready');
+    expect(result.current.error).toBeNull();
+  });
+
+  it('preserves the worker initialization error instead of replacing it with a timeout', () => {
+    const silentFactory = jest.fn(() => {
+      const worker = new MockWorker();
+      worker.postMessage = jest.fn();
+      return worker;
+    });
+    (global as typeof global & { Worker: typeof Worker }).Worker =
+      silentFactory as unknown as typeof Worker;
+
+    const { result } = renderHook(() => useAIWorker());
+    act(() => {
+      jest.advanceTimersByTime(0);
+    });
+    const instance = silentFactory.mock.results[0].value as MockWorker;
+
+    act(() => {
+      instance.onmessage?.({
+        data: { type: 'ERROR', payload: { error: 'Model download failed' } },
+      } as MessageEvent);
+      jest.advanceTimersByTime(15_000);
+    });
+
+    expect(result.current.workerStatus).toBe('error');
+    expect(result.current.error).toBe('Model download failed');
   });
 
   it('bypasses state updates if onMessage returns true', async () => {

@@ -6,7 +6,9 @@ import type { AsyncStatus } from '@/lib/types/status.types';
 import { logger } from '@/lib/utils/logger';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const INIT_TIMEOUT_MILLISECONDS = 5_000;
+// MediaPipe loads local WASM and model assets before the worker can send READY.
+// Keep the startup budget aligned with the existing 15-second benchmark deadline.
+const INIT_TIMEOUT_MILLISECONDS = 15_000;
 
 const COMPONENT_NAME = 'useAIWorker';
 
@@ -31,11 +33,18 @@ export function useAIWorker(options?: AIWorkerOptions) {
 
 
   const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bootstrapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const createWorker = useCallback(() => {
+    if (bootstrapTimeoutRef.current !== null) {
+      clearTimeout(bootstrapTimeoutRef.current);
+      bootstrapTimeoutRef.current = null;
+    }
+
     // Clean up any existing worker
-    if (initTimeoutRef.current) {
+    if (initTimeoutRef.current !== null) {
       clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
     }
     if (workerRef.current) {
       workerRef.current.terminate();
@@ -52,8 +61,12 @@ export function useAIWorker(options?: AIWorkerOptions) {
     workerRef.current = worker;
 
     initTimeoutRef.current = setTimeout(() => {
+      initTimeoutRef.current = null;
       if (workerRef.current === worker) {
-        logger.error(COMPONENT_NAME, 'Worker INIT timed out after 5 seconds');
+        logger.error(
+          COMPONENT_NAME,
+          `Worker INIT timed out after ${INIT_TIMEOUT_MILLISECONDS / 1000} seconds`
+        );
         setWorkerStatus('error');
         setError('Worker initialization timed out');
       }
@@ -73,10 +86,17 @@ export function useAIWorker(options?: AIWorkerOptions) {
       setLastResponse(response);
 
       if (response.type === 'READY') {
-        if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+        if (initTimeoutRef.current !== null) {
+          clearTimeout(initTimeoutRef.current);
+          initTimeoutRef.current = null;
+        }
         setWorkerStatus('ready');
         setInitializationDurationMs(Math.round(performance.now() - initStartedAtRef.current));
       } else if (response.type === 'ERROR') {
+        if (initTimeoutRef.current !== null) {
+          clearTimeout(initTimeoutRef.current);
+          initTimeoutRef.current = null;
+        }
         setWorkerStatus('error');
         // Check if payload has detailed error info
         if (response.payload.type) {
@@ -92,6 +112,10 @@ export function useAIWorker(options?: AIWorkerOptions) {
     };
 
     worker.onerror = (event: ErrorEvent) => {
+      if (initTimeoutRef.current !== null) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
       const message = event.message || 'Unhandled worker error';
       logger.error(COMPONENT_NAME, 'Worker runtime error', message);
       setWorkerStatus('error');
@@ -102,11 +126,21 @@ export function useAIWorker(options?: AIWorkerOptions) {
   }, []);
 
   useEffect(() => {
-    setTimeout(createWorker, 0);
+    bootstrapTimeoutRef.current = setTimeout(() => {
+      bootstrapTimeoutRef.current = null;
+      createWorker();
+    }, 0);
 
 
     return () => {
-      if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+      if (bootstrapTimeoutRef.current !== null) {
+        clearTimeout(bootstrapTimeoutRef.current);
+        bootstrapTimeoutRef.current = null;
+      }
+      if (initTimeoutRef.current !== null) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
