@@ -1,0 +1,387 @@
+.shell,
+.permission {
+  --camera-controls-height: calc(104px + env(safe-area-inset-bottom, 0px));
+  color-scheme: light;
+  color: #11120d;
+  background: #f8f5f0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1rem;
+}
+.shell,
+.permission {
+  min-height: 100dvh;
+}
+.permission {
+  width: 100%;
+}
+.shell :is(a, button, summary):focus-visible,
+.permission :is(a, button):focus-visible {
+  outline: 3px solid #6a780f;
+  outline-offset: 4px;
+}
+.permissionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1440px;
+  margin: auto;
+  padding: 24px clamp(20px, 4vw, 64px);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #11120d;
+  font-size: 1.4375rem;
+  font-weight: 600;
+  letter-spacing: -1px;
+  text-decoration: none;
+}
+.brandIcon {
+  filter: invert(1);
+  mix-blend-mode: multiply;
+}
+.brandLight {
+  font-weight: 400;
+}
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #575c48;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.backLink:hover,
+.pricingLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.permissionContent {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  align-items: center;
+  gap: clamp(32px, 6vw, 100px);
+  max-width: 1440px;
+  min-height: calc(100dvh - 92px);
+  margin: auto;
+  padding: 28px clamp(20px, 4vw, 64px) 48px;
+}
+.permissionIntro {
+  max-width: 600px;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #575c48;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+}
+.permissionTitle {
+  margin-top: 24px;
+  font-size: clamp(2.75rem, 4.8vw, 4.75rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -2.8px;
+}
+.permissionTitle em,
+.referenceCaption em {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+.description {
+  max-width: 440px;
+  margin-top: 24px;
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+.primaryButton {
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 52px;
+  height: auto;
+  max-width: 100%;
+  margin-top: 30px;
+  padding: 14px 20px;
+  border-radius: 0;
+  background: #def753;
+  color: #11120d;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: normal;
+}
+.primaryButton:hover {
+  background: #e8ff7b;
+  color: #11120d;
+}
+.cameraOnly {
+  margin-top: 12px;
+  color: #575c48;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.permissionPrivacy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  color: #575c48;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.permissionPrivacy svg {
+  flex-shrink: 0;
+}
+.pricingLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 12px;
+  color: #575c48;
+  font-size: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.permissionSteps {
+  margin-top: 24px;
+  padding-left: 24px;
+  list-style: decimal;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.permissionSteps li + li {
+  margin-top: 8px;
+}
+.permissionError {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-left: 3px solid #9a3c1c;
+  background: #f8e8dc;
+  color: #762b15;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.permissionReference {
+  position: relative;
+  align-self: stretch;
+  min-height: 520px;
+  max-height: 760px;
+  overflow: hidden;
+}
+.referenceImage {
+  object-fit: cover;
+}
+.referenceLabel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  padding: 9px 12px;
+  background: #f8f5f0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.referenceCaption {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  padding: 18px 22px;
+  background: #def753;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+.live {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #11120d;
+  color: #f8f5f0;
+}
+.live :is(a, button, summary):focus-visible {
+  outline-color: #def753;
+}
+.liveHeader {
+  position: absolute;
+  z-index: 30;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+}
+.liveHeader a {
+  pointer-events: auto;
+}
+.liveHeader .brand {
+  padding: 4px 10px;
+  background: #f8f5f0;
+}
+.homeLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  background: #f8f5f0;
+  color: #11120d;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.poseHint {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(var(--camera-controls-height, 104px) + 12px);
+  left: 50%;
+  width: min(440px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  border-left: 3px solid #def753;
+  background: rgb(17 18 13 / 90%);
+  color: #f8f5f0;
+  pointer-events: none;
+}
+.poseHint p:first-child {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.poseHint p + p {
+  margin-top: 4px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.cameraErrorBanner {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top, 0px)) + 68px);
+  right: 16px;
+  left: 16px;
+  max-height: calc(
+    100dvh - max(12px, env(safe-area-inset-top, 0px)) - 68px -
+      var(
+        --camera-controls-height,
+        calc(104px + env(safe-area-inset-bottom, 0px))
+      ) -
+      8px
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.coachingMessages {
+  display: contents;
+}
+.voicePanel {
+  position: absolute;
+  z-index: 40;
+  top: calc(max(12px, env(safe-area-inset-top, 0px)) + 66px);
+  right: 16px;
+  max-width: calc(100% - 32px);
+  padding: 4px 12px;
+  border: 1px solid #deddd2;
+  background: #f8f5f0;
+  color: #11120d;
+  font-size: 1rem;
+}
+.voicePanel[open] {
+  width: min(384px, calc(100% - 32px));
+  max-height: calc(100dvh - 230px - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+.voiceSummary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.voiceSummary::-webkit-details-marker {
+  display: none;
+}
+.voiceSummary span {
+  margin-left: auto;
+  color: #575c48;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .live :global([data-testid="pose-fps-indicator"]) {
+    top: calc(max(12px, env(safe-area-inset-top, 0px)) + 48px);
+    left: 12px;
+  }
+  .coachingMessages {
+    position: absolute;
+    top: calc(max(12px, env(safe-area-inset-top, 0px)) + 100px);
+    bottom: calc(
+      var(
+          --camera-controls-height,
+          calc(104px + env(safe-area-inset-bottom, 0px))
+        ) +
+        8px
+    );
+    left: 12px;
+    display: flex;
+    width: min(340px, calc(50vw - 24px));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    overflow-y: auto;
+    padding: 0 4px 8px 0;
+    overscroll-behavior: contain;
+    pointer-events: auto;
+    z-index: 30;
+  }
+  .coachingMessages > * {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: auto !important;
+  }
+}
+@media (max-width: 767px) {
+  .permissionHeader {
+    padding: 16px 20px;
+    gap: 12px;
+  }
+  .brand {
+    font-size: 1.25rem;
+  }
+  .backLink {
+    gap: 5px;
+  }
+  .permissionContent {
+    display: block;
+    min-height: calc(100dvh - 76px);
+    padding: 48px 24px;
+  }
+  .permissionTitle {
+    font-size: clamp(2.75rem, 10vw, 3.5rem);
+    letter-spacing: -2px;
+  }
+  .permissionReference {
+    display: none;
+  }
+  .permissionPrivacy {
+    margin-top: 32px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell *,
+  .permission * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

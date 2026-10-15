@@ -1,6 +1,7 @@
 'use client';
 
 import { detectionErrorAtom, detectionRetrySignalAtom } from '@/lib/stores/pose-store';
+import styles from '@/components/camera/camera-ui.module.css';
 import type { WorkerErrorDetail } from '@/lib/types/error.types';
 import { cn } from '@/lib/utils';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -40,41 +41,46 @@ export function CameraErrorBanner() {
     : 'Motion tracking stopped unexpectedly. Dismiss and try again.';
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-      <div className={cn(
-        "flex items-start gap-3 rounded-lg p-4 shadow-lg backdrop-blur-md border",
-        "bg-red-500/10 border-red-500/20 text-red-100"
-      )}>
-        <AlertCircle className="mt-0.5 size-5 text-red-400 shrink-0" />
-        
-        <div className="flex-1 space-y-1">
-          <p className="font-medium text-sm text-red-200">
+    <div className={cn(styles.cameraErrorBanner, 'z-50')}>
+      <div
+        className={cn(
+          'flex items-start gap-3 rounded-xl border border-red-300/30 bg-stone-950 p-4 text-stone-50 shadow-lg',
+        )}
+        role="alert"
+      >
+        <AlertCircle aria-hidden="true" className="mt-1 size-5 shrink-0 text-red-300" />
+
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-base font-semibold text-red-200">
             {isLoadError ? 'AI Model Failed to Load' : 'Motion Tracking Error'}
           </p>
-          <p className="text-xs text-red-300/80 leading-relaxed">
-            {bodyText}
-          </p>
-          
+          <p className="text-base leading-relaxed text-stone-100">{bodyText}</p>
+
           {isLoadError && (
             <div className="pt-2">
               <button
+                type="button"
                 onClick={handleRetry}
                 disabled={retrying}
-                className="flex items-center gap-2 rounded-md bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-200 hover:bg-red-500/30 active:scale-95 transition-all disabled:opacity-50"
+                className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg bg-red-300/15 px-4 py-2 text-base font-medium text-red-100 hover:bg-red-300/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 motion-safe:transition-colors disabled:opacity-60"
               >
-                <RefreshCw className={cn("size-3.5", retrying && "animate-spin")} />
+                <RefreshCw
+                  aria-hidden="true"
+                  className={cn('size-4', retrying && 'motion-safe:animate-spin')}
+                />
                 {retrying ? 'Retrying...' : 'Retry Connection'}
               </button>
-
             </div>
           )}
         </div>
 
-        <button 
+        <button
+          type="button"
           onClick={handleDismiss}
-          className="rounded-full p-1 hover:bg-white/10 active:scale-90 transition-all text-white/50 hover:text-white"
+          aria-label="Dismiss error"
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-stone-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 motion-safe:transition-colors"
         >
-          <X className="size-4" />
+          <X aria-hidden="true" className="size-5" />
         </button>
       </div>
     </div>

@@ -13,9 +13,9 @@ export function LightingWarning() {
       data-testid="lighting-warning"
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-20"
+      className="pointer-events-none absolute left-4 right-4 top-[146px] z-20 flex justify-start"
     >
-      <p className="rounded-xl bg-black/60 px-3 py-1.5 text-xs font-medium text-amber-200 backdrop-blur-sm">
+      <p className="max-w-full rounded-xl border border-white/10 bg-stone-950/90 px-4 py-2 text-center text-base font-medium text-amber-100 shadow-lg">
         Try more lighting
       </p>
     </div>

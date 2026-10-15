@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep the development badge from covering the camera's frame control.
+  devIndicators: false,
   output: "standalone",
   transpilePackages: ["jotai"],
   // Standalone tracing misses Sharp's Windows runtime DLLs.

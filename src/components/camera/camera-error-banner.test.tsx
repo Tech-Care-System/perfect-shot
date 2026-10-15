@@ -54,7 +54,9 @@ describe('CameraErrorBanner', () => {
 
     it('shows Retry button for load error', () => {
       renderWithStore(LOAD_ERROR);
-      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+      const retryButton = screen.getByRole('button', { name: /retry/i });
+      expect(retryButton).toBeInTheDocument();
+      expect(retryButton).toHaveClass('min-h-11', 'min-w-11', 'text-base');
     });
   });
 
@@ -102,7 +104,7 @@ describe('CameraErrorBanner', () => {
       const { store } = renderWithStore(RUNTIME_ERROR);
       expect(screen.getByText('Motion Tracking Error')).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: '' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss error' }));
 
       expect(store.get(detectionErrorAtom)).toBeNull();
     });
@@ -116,6 +118,16 @@ describe('CameraErrorBanner', () => {
       });
 
       expect(screen.queryByText('Motion Tracking Error')).not.toBeInTheDocument();
+    });
+
+    it('positions the opaque alert below the camera header and labels a 44px dismiss target', () => {
+      renderWithStore(RUNTIME_ERROR);
+      const alert = screen.getByRole('alert');
+      const dismissButton = screen.getByRole('button', { name: 'Dismiss error' });
+
+      expect(alert.parentElement).toHaveClass('top-20');
+      expect(alert).toHaveClass('bg-stone-950');
+      expect(dismissButton).toHaveClass('size-11');
     });
   });
 

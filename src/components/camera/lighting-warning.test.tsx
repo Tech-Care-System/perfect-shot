@@ -33,6 +33,8 @@ describe('LightingWarning', () => {
     const el = screen.getByTestId('lighting-warning');
     expect(el).toHaveAttribute('role', 'status');
     expect(el).toHaveAttribute('aria-live', 'polite');
+    expect(el).toHaveClass('top-[146px]', 'left-4', 'right-4');
+    expect(screen.getByText('Try more lighting')).toHaveClass('text-base');
   });
 
   it('disappears when atom changes from true to false', () => {

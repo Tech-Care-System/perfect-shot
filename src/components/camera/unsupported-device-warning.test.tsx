@@ -51,12 +51,17 @@ describe('UnsupportedDeviceWarning', () => {
     const el = screen.getByTestId('unsupported-device-warning');
     expect(el).toHaveAttribute('role', 'status');
     expect(el).toHaveAttribute('aria-live', 'polite');
+    expect(el).toHaveClass('top-[194px]', 'left-4', 'right-4');
+    expect(
+      screen.getByText('Your device may have slower feedback. For best results, use the manual shutter button.')
+    ).toHaveClass('text-base');
   });
 
   it('dismiss button has aria-label="Dismiss warning"', () => {
     renderWithStore(true);
     const btn = screen.getByTestId('unsupported-device-dismiss');
     expect(btn).toHaveAttribute('aria-label', 'Dismiss warning');
+    expect(btn).toHaveClass('size-11');
   });
 
   it('has pointer-events-none class on container', () => {

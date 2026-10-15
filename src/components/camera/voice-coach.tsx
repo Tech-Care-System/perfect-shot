@@ -1,5 +1,7 @@
 "use client";
 
+import styles from "./camera-ui.module.css";
+
 import {
   currentPoseAtom,
   detectionLostAtom,
@@ -480,13 +482,9 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
   const displayedAudioState = audioCue === cue ? audioState : "idle";
 
   return (
-    <details
-      className="absolute right-4 top-4 z-40 max-w-[calc(100%-2rem)] rounded-2xl border border-white/20 bg-black/75 p-3 text-white shadow-lg backdrop-blur-md open:w-[min(24rem,calc(100%-2rem))]"
-      aria-label="Voice coaching controls"
-    >
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 text-base font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-        Voice coach{" "}
-        <span className="ml-auto text-white/80">{enabled ? "On" : "Off"}</span>
+    <details className={styles.voicePanel} aria-label="Voice coaching controls">
+      <summary className={styles.voiceSummary}>
+        Voice coach <span>{enabled ? "On" : "Off"}</span>
       </summary>
       <div className="pt-3">
         {checkingAvailability ? (
@@ -501,7 +499,7 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
             <button
               type="button"
               onClick={retryAvailabilityCheck}
-              className="rounded-full border border-white/50 px-3 py-2 text-base font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="rounded-full border border-[#b8b9a9] px-3 py-2 text-base font-semibold hover:bg-[#efeee3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
             >
               Try again
             </button>
@@ -510,7 +508,7 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
           <div className="space-y-2">
             <Link
               href="/#pricing"
-              className="inline-flex rounded-full bg-lime-300 px-3 py-2 text-base font-semibold text-black hover:bg-lime-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex rounded-full bg-[#def753] px-3 py-2 text-base font-semibold text-black hover:bg-[#e8ff7b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
             >
               Voice coaching is included in Starter and Pro
             </Link>
@@ -523,14 +521,14 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
             <button
               type="button"
               onClick={retryAvailabilityCheck}
-              className="rounded-full border border-white/50 px-3 py-2 text-base font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="rounded-full border border-[#b8b9a9] px-3 py-2 text-base font-semibold hover:bg-[#efeee3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
             >
               Try again
             </button>
             <form action="/api/billing-portal" method="post">
               <button
                 type="submit"
-                className="rounded-full border border-white/50 px-3 py-2 text-base font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="rounded-full border border-[#b8b9a9] px-3 py-2 text-base font-semibold hover:bg-[#efeee3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
               >
                 Manage plan
               </button>
@@ -547,12 +545,12 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
               aria-describedby="voice-coach-privacy"
               disabled={!cameraReady || captured}
               onClick={handleToggle}
-              className="rounded-full bg-lime-300 px-3 py-2 text-base font-semibold text-black hover:bg-lime-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-[#def753] px-3 py-2 text-base font-semibold text-black hover:bg-[#e8ff7b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {enabled ? "Voice coaching on" : "Voice coaching off"}
             </button>
             <p
-              className="mt-2 text-base leading-relaxed text-white/85"
+              className="mt-2 text-base leading-relaxed text-[#575c48]"
               id="voice-coach-privacy"
             >
               When you switch it on, only a fixed coaching sentence is sent to
@@ -561,13 +559,13 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
             <form action="/api/billing-portal" method="post" className="mt-2">
               <button
                 type="submit"
-                className="rounded-full border border-white/50 px-3 py-2 text-base font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="rounded-full border border-[#b8b9a9] px-3 py-2 text-base font-semibold hover:bg-[#efeee3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
               >
                 Manage plan
               </button>
             </form>
             {!cameraReady && (
-              <p className="mt-2 text-base text-white/85" role="status">
+              <p className="mt-2 text-base text-[#575c48]" role="status">
                 Start the camera to enable voice coaching.
               </p>
             )}
@@ -590,7 +588,7 @@ export function VoiceCoach({ cameraReady, captured }: VoiceCoachProps) {
                   <button
                     type="button"
                     onClick={handleRetry}
-                    className="rounded-full border border-white/50 px-3 py-2 text-base font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="rounded-full border border-[#b8b9a9] px-3 py-2 text-base font-semibold hover:bg-[#efeee3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6a780f]"
                   >
                     Retry
                   </button>

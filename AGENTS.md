@@ -6,6 +6,8 @@ Keep camera frames and pose processing on the device. Preserve clear camera perm
 
 Use a minimum text size of 1rem, including navigation, buttons, captions, and small print. Reflow narrow layouts instead of shrinking text. Keep the camera guide a translucent white body contour, without visible tracking joints.
 
+Carry the landing page identity through camera permission, live controls, settings, and photo review. Check the whole journey at phone and desktop widths. Keep calibration in the background so manual capture remains usable; keep pose hints clear of the shutter and restore keyboard focus after photo review closes.
+
 ElevenLabs voice coaching is opt-in and sends only allowlisted instruction text. Keep provider credentials on the server and verify paid access with Stripe; never trust a client-supplied plan.
 
 Ground landing-page claims in verified app behavior. Avoid unmeasured latency or capture-speed promises; pose matching requires a held pose, and performance varies by device. Label proposed brand choices separately from verified reference material.
