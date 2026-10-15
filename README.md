@@ -19,6 +19,8 @@ Open [http://localhost:3000](http://localhost:3000) for the landing page. The li
 
 The [landing-page creative brief](docs/landing-page-creative-brief.md) records the inspected Canva reference, visual identity, and generated image plan.
 
+The [product pitch](docs/pitch/README.md) includes the editable Google Slides deck and an offline PDF for the showcase.
+
 Free includes all pose scenes, a translucent white body guide, visual corrections, and local capture. Starter ($5/month) adds spoken pose corrections; Pro ($12/month) adds spoken pose introductions and framing, lighting, and distance cues. See [Stripe billing setup](docs/billing.md) and [ElevenLabs voice setup](docs/voice-coaching.md). Copy `.env.example` to `.env.local` for local configuration and keep credentials private. The camera works without these services; paid checkout and speech require the corresponding provider configuration. Voice coaching is off until enabled and sends instruction text, never camera frames, to ElevenLabs.
 
 After dependency changes, keep the MediaPipe runtime and model aligned with the installed `@mediapipe/tasks-vision` package. `pnpm install` copies its WASM files into `public/wasm`; the pose model is stored at `public/models/pose_landmarker_lite.task`.
