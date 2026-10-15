@@ -4,6 +4,7 @@ import {
     poseFpsAtom,
     poseResultAtom,
 } from '@/lib/stores/pose-store';
+import type { AIWorkerResponse } from '@/lib/ai/worker.types';
 import { liteModeAtom } from '@/lib/stores/settings-store';
 import { act, renderHook } from '@testing-library/react';
 import { getDefaultStore } from 'jotai';
@@ -32,9 +33,10 @@ Object.defineProperty(window, 'cancelAnimationFrame', {
 });
 
 describe('usePoseDetection', () => {
-  const mockPostMessage = jest.fn();
+  const mockPostMessage = jest.fn(() => true);
   const mockRestartWorker = jest.fn();
   const mockStore = getDefaultStore();
+  let mockBitmapClose: jest.Mock;
 
   function createReadyVideo(overrides: Partial<HTMLVideoElement> = {}): HTMLVideoElement {
     return {
@@ -42,6 +44,13 @@ describe('usePoseDetection', () => {
       readyState: 3, // HAVE_FUTURE_DATA
       ...overrides,
     } as unknown as HTMLVideoElement;
+  }
+
+  function createEmptyPoseResponse(): Extract<AIWorkerResponse, { type: 'POSE_RESULT' }> {
+    return {
+      type: 'POSE_RESULT',
+      payload: { landmarks: [], worldLandmarks: [], close: () => {} },
+    };
   }
 
   function mockWorkerReturn(overrides: Partial<ReturnType<typeof useAIWorker>> = {}) {
@@ -56,12 +65,13 @@ describe('usePoseDetection', () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
+    mockBitmapClose = jest.fn();
 
     // Mock createImageBitmap (not in JSDOM)
     global.createImageBitmap = jest.fn().mockResolvedValue({
       width: 640,
       height: 480,
-      close: jest.fn(),
+      close: mockBitmapClose,
     } as unknown as ImageBitmap);
 
     mockWorkerReturn();
@@ -122,6 +132,183 @@ describe('usePoseDetection', () => {
 
     // Should only have been called once despite multiple loop iterations
     expect(mockPostMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps one DETECT in flight and resumes when its result arrives', async () => {
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
+
+    const video = createReadyVideo();
+    const { result } = renderHook(() => usePoseDetection());
+    await act(async () => {
+      result.current.startDetection(video);
+      await Promise.resolve();
+    });
+
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+
+    (video as { currentTime: number }).currentTime = 2;
+    await act(async () => {
+      jest.advanceTimersByTime(80);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+
+    const response = createEmptyPoseResponse();
+    act(() => onMessage?.(response));
+    expect(mockStore.get(poseResultAtom)).toEqual(response.payload);
+    (video as { currentTime: number }).currentTime = 3;
+    await act(async () => {
+      jest.advanceTimersByTime(16);
+      await Promise.resolve();
+    });
+
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
+    expect(mockBitmapClose).not.toHaveBeenCalled();
+  });
+
+  it('releases the in-flight gate on an ERROR response', async () => {
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
+
+    const video = createReadyVideo();
+    const { result } = renderHook(() => usePoseDetection());
+    await act(async () => {
+      result.current.startDetection(video);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      expect(onMessage?.({ type: 'ERROR', payload: { error: 'inference failed' } })).toBe(false);
+    });
+    (video as { currentTime: number }).currentTime = 2;
+    await act(async () => {
+      jest.advanceTimersByTime(16);
+      await Promise.resolve();
+    });
+
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it('closes a captured ImageBitmap if detection stops before transfer', async () => {
+    let resolveBitmap: ((image: ImageBitmap) => void) | null = null;
+    const imageBitmap = { width: 640, height: 480, close: mockBitmapClose } as unknown as ImageBitmap;
+    global.createImageBitmap = jest.fn(() => new Promise((resolve) => {
+      resolveBitmap = resolve;
+    }));
+
+    const { result } = renderHook(() => usePoseDetection());
+    act(() => {
+      result.current.startDetection(createReadyVideo());
+      result.current.stopDetection();
+    });
+
+    await act(async () => {
+      resolveBitmap?.(imageBitmap);
+      await Promise.resolve();
+    });
+
+    expect(mockPostMessage).not.toHaveBeenCalled();
+    expect(mockBitmapClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases the gate on stop and ignores a late result from the stopped frame', async () => {
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
+
+    const video = createReadyVideo();
+    const { result } = renderHook(() => usePoseDetection());
+    await act(async () => {
+      result.current.startDetection(video);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.stopDetection());
+    (video as { currentTime: number }).currentTime = 2;
+    await act(async () => {
+      result.current.startDetection(video);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
+
+    act(() => onMessage?.(createEmptyPoseResponse()));
+    expect(mockStore.get(poseResultAtom)).toBeNull();
+    (video as { currentTime: number }).currentTime = 3;
+    await act(async () => {
+      jest.advanceTimersByTime(16);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
+
+    const currentResponse = createEmptyPoseResponse();
+    act(() => onMessage?.(currentResponse));
+    expect(mockStore.get(poseResultAtom)).toEqual(currentResponse.payload);
+    (video as { currentTime: number }).currentTime = 4;
+    await act(async () => {
+      jest.advanceTimersByTime(16);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(3);
+  });
+
+  it('clears the in-flight gate when the worker restarts', async () => {
+    let workerStatus: 'ready' | 'loading' = 'ready';
+    (useAIWorker as jest.Mock).mockImplementation(() => ({
+      postMessage: mockPostMessage,
+      workerStatus,
+      error: null,
+      restartWorker: mockRestartWorker,
+    }));
+
+    const video = createReadyVideo();
+    const { result, rerender } = renderHook(() => usePoseDetection());
+    await act(async () => {
+      result.current.startDetection(video);
+      await Promise.resolve();
+    });
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      workerStatus = 'loading';
+      rerender();
+    });
+    act(() => {
+      workerStatus = 'ready';
+      rerender();
+    });
+    (video as { currentTime: number }).currentTime = 2;
+    await act(async () => {
+      jest.advanceTimersByTime(16);
+      await Promise.resolve();
+    });
+
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
   });
 
   // ── Finding 6: readyState gating ──────────────────────────────
@@ -334,6 +521,16 @@ describe('usePoseDetection', () => {
 
   it('throttles DETECT messages in lite mode', async () => {
     mockStore.set(liteModeAtom, true);
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
 
     let perfTime = 100;
     jest.spyOn(performance, 'now').mockImplementation(() => perfTime);
@@ -341,16 +538,13 @@ describe('usePoseDetection', () => {
     const video = createReadyVideo();
     const { result } = renderHook(() => usePoseDetection());
 
-    act(() => {
-      result.current.startDetection(video);
-    });
-
     await act(async () => {
-      jest.advanceTimersByTime(16);
+      result.current.startDetection(video);
       await Promise.resolve();
     });
 
     expect(mockPostMessage).toHaveBeenCalledTimes(1);
+    act(() => onMessage?.(createEmptyPoseResponse()));
 
     perfTime = 130;
     (video as { currentTime: number }).currentTime = 2.0;
@@ -373,36 +567,55 @@ describe('usePoseDetection', () => {
 
   it('does not throttle in normal mode', async () => {
     mockStore.set(liteModeAtom, false);
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
 
     const video = createReadyVideo();
     const { result } = renderHook(() => usePoseDetection());
 
-    act(() => {
-      result.current.startDetection(video);
-    });
-
     await act(async () => {
-      jest.advanceTimersByTime(16);
+      result.current.startDetection(video);
       await Promise.resolve();
     });
+    expect(mockPostMessage).toHaveBeenCalledTimes(1);
 
+    act(() => onMessage?.(createEmptyPoseResponse()));
     (video as { currentTime: number }).currentTime = 2.0;
     await act(async () => {
       jest.advanceTimersByTime(16);
       await Promise.resolve();
     });
+    expect(mockPostMessage).toHaveBeenCalledTimes(2);
 
+    act(() => onMessage?.(createEmptyPoseResponse()));
     (video as { currentTime: number }).currentTime = 3.0;
     await act(async () => {
       jest.advanceTimersByTime(16);
       await Promise.resolve();
     });
-
     expect(mockPostMessage).toHaveBeenCalledTimes(3);
   });
 
   it('resumes processing after throttle window elapses in lite mode', async () => {
     mockStore.set(liteModeAtom, true);
+    let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+    (useAIWorker as jest.Mock).mockImplementation((options) => {
+      onMessage = options.onMessage;
+      return {
+        postMessage: mockPostMessage,
+        workerStatus: 'ready',
+        error: null,
+        restartWorker: mockRestartWorker,
+      };
+    });
 
     let perfTime = 100;
     jest.spyOn(performance, 'now').mockImplementation(() => perfTime);
@@ -420,6 +633,7 @@ describe('usePoseDetection', () => {
     });
 
     expect(mockPostMessage).toHaveBeenCalledTimes(1);
+    act(() => onMessage?.(createEmptyPoseResponse()));
 
     perfTime = 130;
     (video as { currentTime: number }).currentTime = 2.0;
@@ -429,6 +643,7 @@ describe('usePoseDetection', () => {
     });
 
     expect(mockPostMessage).toHaveBeenCalledTimes(1);
+    act(() => onMessage?.(createEmptyPoseResponse()));
 
     perfTime = 200;
     (video as { currentTime: number }).currentTime = 3.0;

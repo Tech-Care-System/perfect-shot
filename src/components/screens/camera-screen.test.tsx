@@ -60,6 +60,10 @@ jest.mock('@/components/camera/camera-preview', () => ({
   CameraPreview: () => <div data-testid="camera-preview" />,
 }));
 
+jest.mock('@/components/camera/voice-coach', () => ({
+  VoiceCoach: () => <div data-testid="voice-coach" />,
+}));
+
 jest.mock('@/components/camera/wireframe-canvas', () => ({
   WireframeCanvas: () => <div data-testid="wireframe-canvas" />,
 }));
@@ -228,6 +232,11 @@ describe('CameraScreen Component', () => {
     it('should render SubjectDistanceWarning in the camera view', () => {
         render(<CameraScreen />);
         expect(screen.getByTestId('subject-distance-warning')).toBeInTheDocument();
+    });
+
+    it('should render VoiceCoach in the camera view', () => {
+        render(<CameraScreen />);
+        expect(screen.getByTestId('voice-coach')).toBeInTheDocument();
     });
 
     it('should render SubjectFramingWarning in the camera view', () => {

@@ -23,7 +23,8 @@ test.describe('Story 2.1: AI Worker non-blocking behavior', () => {
 
     await expect(counterValue).toHaveText('10');
     expect(pageErrors).toEqual([]);
-    await expect(page.getByTestId('worker-response')).toHaveText('POSE_RESULT');
+    // The first software-GPU inference is cold and measured at 8–10 seconds locally.
+    await expect(page.getByTestId('worker-response')).toHaveText('POSE_RESULT', { timeout: 15_000 });
     await expect(page.getByTestId('worker-error')).toHaveText('none');
   });
 });

@@ -116,15 +116,16 @@ export function useAIWorker(options?: AIWorkerOptions) {
     };
   }, [createWorker]);
 
-  const postMessage = useCallback((message: AIWorkerMessage, transfer?: Transferable[]) => {
+  const postMessage = useCallback((message: AIWorkerMessage, transfer?: Transferable[]): boolean => {
     if (!workerRef.current) {
       const messageText = 'Worker is not initialized';
       setWorkerStatus('error');
       setError(messageText);
-      return;
+      return false;
     }
 
     workerRef.current.postMessage(message, transfer || []);
+    return true;
   }, []);
 
   const terminate = useCallback(() => {

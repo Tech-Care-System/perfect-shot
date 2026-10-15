@@ -63,7 +63,7 @@ export function ControlBar({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between px-8 pb-12 pt-6 bg-linear-to-t from-black/80 to-transparent">
+    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-8 pb-12 pt-6 bg-linear-to-t from-black/80 to-transparent">
       {/* Fit Mode Toggle */}
       {onToggleFitMode && (
         <Button

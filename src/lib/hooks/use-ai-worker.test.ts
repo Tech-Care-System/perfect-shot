@@ -48,10 +48,11 @@ describe('useAIWorker', () => {
     });
 
     act(() => {
-      result.current.postMessage({
+      const sent = result.current.postMessage({
         type: 'DETECT',
         payload: { image: {} as OffscreenCanvas, timestamp: 1234 },
       });
+      expect(sent).toBe(true);
     });
 
     const instance = workerFactory.mock.results[0].value as MockWorker;
@@ -138,10 +139,11 @@ describe('useAIWorker', () => {
     });
 
     act(() => {
-      result.current.postMessage({
+      const sent = result.current.postMessage({
         type: 'DETECT',
         payload: { image: {} as OffscreenCanvas, timestamp: 1234 },
       });
+      expect(sent).toBe(false);
     });
 
     expect(result.current.workerStatus).toBe('error');

@@ -11,7 +11,7 @@ import { PoseCorrectionPrompt } from '@/components/camera/pose-correction-prompt
 import { SubjectDistanceWarning } from '@/components/camera/subject-distance-warning';
 import { SubjectFramingWarning } from '@/components/camera/subject-framing-warning';
 import { UnsupportedDeviceWarning } from '@/components/camera/unsupported-device-warning';
-import { WireframeCanvas } from '@/components/camera/wireframe-canvas';
+import { VoiceCoach } from '@/components/camera/voice-coach';
 import { ControlBar } from '@/components/controls/control-bar';
 import { PoseHintCard } from '@/components/controls/pose-hint-card';
 import { LITE_MODE_FPS, UNSUPPORTED_FPS_THRESHOLD } from '@/constants/app.constants';
@@ -112,7 +112,11 @@ export function CameraScreen() {
        <CameraErrorBanner />
        <div className="relative h-full w-full">
          <CameraPreview />
-         <WireframeCanvas />
+         <VoiceCoach
+           key={`${status === 'ready' ? 'ready' : 'not-ready'}:${capturedPhoto ? 'captured' : 'live'}`}
+           cameraReady={status === 'ready'}
+           captured={capturedPhoto !== null}
+         />
          <FeedbackGlow />
          <DetectionFailureWarning />
          <PoseCorrectionPrompt />

@@ -52,18 +52,19 @@ export async function handleWorkerMessage(message: AIWorkerMessage): Promise<AIW
       }
     }
     case 'DETECT': {
-      if (!poseLandmarker) {
-        return {
-          type: 'ERROR',
-          payload: {
-            error: 'PoseLandmarker is not initialized. Send INIT and wait for READY before DETECT.',
-          },
-        };
-      }
-
+      const image = message.payload.image;
       try {
+        if (!poseLandmarker) {
+          return {
+            type: 'ERROR',
+            payload: {
+              error: 'PoseLandmarker is not initialized. Send INIT and wait for READY before DETECT.',
+            },
+          };
+        }
+
         if (Math.random() < 0.05) workerLogger.log('Received DETECT', message.payload.timestamp);
-        const result = poseLandmarker.detectForVideo(message.payload.image, message.payload.timestamp);
+        const result = poseLandmarker.detectForVideo(image, message.payload.timestamp);
         if (Math.random() < 0.05) workerLogger.log('Generated POSE_RESULT', result.landmarks.length > 0 ? 'landmarks found' : 'no landmarks');
 
         return {
@@ -76,7 +77,11 @@ export async function handleWorkerMessage(message: AIWorkerMessage): Promise<AIW
           type: 'ERROR',
           payload: { error: `Pose detection failed: ${toErrorMessage(error)}`, type: 'RUNTIME_ERROR' },
         };
-
+      } finally {
+        // The transferred bitmap belongs to the worker and must be released after inference.
+        if ('close' in image && typeof image.close === 'function') {
+          image.close();
+        }
       }
     }
     case 'TERMINATE':

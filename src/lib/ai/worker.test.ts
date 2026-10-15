@@ -47,12 +47,13 @@ describe('AI Worker message handling', () => {
   });
 
   it('returns ERROR if DETECT is called before initialization', async () => {
-    const canvas = {} as OffscreenCanvas;
+    const imageBitmap = { close: jest.fn() } as unknown as ImageBitmap;
     const response = await handleWorkerMessage({
       type: 'DETECT',
-      payload: { image: canvas, timestamp: 1000 },
+      payload: { image: imageBitmap, timestamp: 1000 },
     });
 
+    expect(imageBitmap.close).toHaveBeenCalledTimes(1);
     expect(response?.type).toBe('ERROR');
     if (response?.type === 'ERROR') {
       expect(response.payload.error).toContain('not initialized');
@@ -61,6 +62,7 @@ describe('AI Worker message handling', () => {
 
   it('returns POSE_RESULT and calls detectForVideo after successful INIT', async () => {
     const poseResult = { landmarks: [] };
+    const imageBitmap = { close: jest.fn() } as unknown as ImageBitmap;
     const poseLandmarker = {
       detectForVideo: jest.fn().mockReturnValue(poseResult),
       close: jest.fn(),
@@ -75,13 +77,13 @@ describe('AI Worker message handling', () => {
       payload: { module: 'pose_landmarker' },
     });
 
-    const canvas = {} as OffscreenCanvas;
     const response = await handleWorkerMessage({
       type: 'DETECT',
-      payload: { image: canvas, timestamp: 1234 },
+      payload: { image: imageBitmap, timestamp: 1234 },
     });
 
-    expect(poseLandmarker.detectForVideo).toHaveBeenCalledWith(canvas, 1234);
+    expect(poseLandmarker.detectForVideo).toHaveBeenCalledWith(imageBitmap, 1234);
+    expect(imageBitmap.close).toHaveBeenCalledTimes(1);
     expect(response).toEqual({
       type: 'POSE_RESULT',
       payload: poseResult,
@@ -89,6 +91,7 @@ describe('AI Worker message handling', () => {
   });
 
   it('returns ERROR when detectForVideo throws', async () => {
+    const imageBitmap = { close: jest.fn() } as unknown as ImageBitmap;
     const poseLandmarker = {
       detectForVideo: jest.fn(() => {
         throw new Error('inference failure');
@@ -107,9 +110,10 @@ describe('AI Worker message handling', () => {
 
     const response = await handleWorkerMessage({
       type: 'DETECT',
-      payload: { image: {} as OffscreenCanvas, timestamp: 42 },
+      payload: { image: imageBitmap, timestamp: 42 },
     });
 
+    expect(imageBitmap.close).toHaveBeenCalledTimes(1);
     expect(response?.type).toBe('ERROR');
     if (response?.type === 'ERROR') {
       expect(response.payload.error).toContain('Pose detection failed');

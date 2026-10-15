@@ -10,10 +10,7 @@ node_modules
 out
 build
 
-# Agent / docs / tooling (not needed at runtime)
-.agent
-_bmad
-_bmad-output
+# Docs / tooling (not needed at runtime)
 docs
 playwright-report
 test-results

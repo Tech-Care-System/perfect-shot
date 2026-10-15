@@ -53,6 +53,8 @@ export function usePoseDetection() {
 
 
   const activeRef = useRef(false);
+  const detectionInFlightRef = useRef(false);
+  const stoppedDetectionResponsesRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const lastProcessedTimeRef = useRef(-1);
@@ -70,9 +72,20 @@ export function usePoseDetection() {
   /** Stable reference to the loop function to avoid self-referencing lint errors */
   const loopRef = useRef<() => Promise<void>>(null!);
 
+  const releaseDetectionSlot = () => {
+    if (stoppedDetectionResponsesRef.current > 0) {
+      stoppedDetectionResponsesRef.current -= 1;
+      return false;
+    }
+
+    detectionInFlightRef.current = false;
+    return true;
+  };
+
   const { postMessage, workerStatus, error, restartWorker } = useAIWorker({
     onMessage: (response) => {
       if (response.type === 'POSE_RESULT') {
+        if (!releaseDetectionSlot()) return true;
         setPoseResult(response.payload);
         if (response.payload.landmarks?.[0]?.length >= 33) {
           lastPoseReceivedAtRef.current = performance.now();
@@ -94,6 +107,10 @@ export function usePoseDetection() {
         }
 
         return true;
+      }
+      if (response.type === 'ERROR') {
+        releaseDetectionSlot();
+        return false;
       }
       if (response.type === 'FPS_UPDATE') {
         setFps(response.payload.fps);
@@ -129,6 +146,11 @@ export function usePoseDetection() {
   // ── Frame processing loop (AC1) ───────────────────────────────
   const loop = useCallback(async () => {
     if (!activeRef.current || !videoRef.current) {
+      return;
+    }
+
+    if (detectionInFlightRef.current) {
+      animationFrameIdRef.current = window.requestAnimationFrame(loopRef.current);
       return;
     }
 
@@ -168,18 +190,25 @@ export function usePoseDetection() {
         // but still request the next animation frame to keep the loop alive.
       } else {
         // Frame is valid and worker is ready, proceed with detection
+        let imageBitmap: ImageBitmap | null = null;
         try {
           /**
            * Convert video frame to ImageBitmap for structured cloning/transferring.
            * This is more performant than sending raw pixels or relying on implicit cloning.
            */
-          const imageBitmap = await createImageBitmap(video);
+          imageBitmap = await createImageBitmap(video);
+
+          if (!activeRef.current) {
+            imageBitmap.close();
+            return;
+          }
 
           /**
            * Send to worker with transfer list for zero-copy performance.
            * The imageBitmap becomes unusable in the main thread after this call.
            */
-          postMessage(
+          detectionInFlightRef.current = true;
+          const sent = postMessage(
             {
               type: 'DETECT',
               payload: {
@@ -189,9 +218,16 @@ export function usePoseDetection() {
             },
             [imageBitmap]
           );
-          if (Math.random() < 0.05) logger.log(COMPONENT_NAME, 'Sending frame to worker');
+          if (!sent) {
+            detectionInFlightRef.current = false;
+            imageBitmap.close();
+          } else if (Math.random() < 0.05) {
+            logger.log(COMPONENT_NAME, 'Sending frame to worker');
+          }
 
         } catch (err) {
+          detectionInFlightRef.current = false;
+          imageBitmap?.close();
           // Silently ignore frame capture errors to maintain loop stability
           // Error handling for worker crashes is managed by useAIWorker
           logger.warn(COMPONENT_NAME, 'Failed to create image bitmap for detection', err);
@@ -247,6 +283,10 @@ export function usePoseDetection() {
 
   const stopDetection = useCallback(() => {
     activeRef.current = false;
+    if (detectionInFlightRef.current) {
+      stoppedDetectionResponsesRef.current += 1;
+      detectionInFlightRef.current = false;
+    }
     if (animationFrameIdRef.current !== null) {
       window.cancelAnimationFrame(animationFrameIdRef.current);
       animationFrameIdRef.current = null;
@@ -308,6 +348,10 @@ export function usePoseDetection() {
   }, [stopDetection]);
 
   useEffect(() => {
+    if (workerStatus === 'loading') {
+      detectionInFlightRef.current = false;
+      stoppedDetectionResponsesRef.current = 0;
+    }
     targetPoseRef.current = targetPose;
     liteModeRef.current = liteMode;
     workerStatusRef.current = workerStatus;

@@ -23,7 +23,8 @@ export default function TestAIWorkerPage() {
      }
      setCanvasError(null);
  
-     const canvas = new OffscreenCanvas(1, 1);
+     // Use a representative camera-sized frame instead of a 1×1 placeholder.
+     const canvas = new OffscreenCanvas(320, 240);
      postMessage({
        type: 'DETECT',
        payload: {

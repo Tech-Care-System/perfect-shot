@@ -4,6 +4,12 @@ AI Perfect Shot is an on-device photography PWA built with the Next.js App Route
 
 Keep camera frames and pose processing on the device. Preserve clear camera permission flows, accessible controls, keyboard support, and reduced-motion behavior.
 
+Use a minimum text size of 1rem, including navigation, buttons, captions, and small print. Reflow narrow layouts instead of shrinking text. Keep the camera guide a translucent white body contour, without visible tracking joints.
+
+ElevenLabs voice coaching is opt-in and sends only allowlisted instruction text. Keep provider credentials on the server and verify paid access with Stripe; never trust a client-supplied plan.
+
+Ground landing-page claims in verified app behavior. Avoid unmeasured latency or capture-speed promises; pose matching requires a held pose, and performance varies by device. Label proposed brand choices separately from verified reference material.
+
 Use the ECC workflow: understand the affected code and callers, make the smallest complete change, review it, and verify it. Use pnpm; the selected version is declared in `package.json`. Node.js 24 LTS is selected by `.node-version`.
 
 Keep the MediaPipe WASM runtime in `public/wasm` and the pose model at `public/models/pose_landmarker_lite.task`. The install script copies WASM from the installed `@mediapipe/tasks-vision` package. Check `package.json` for current dependency versions and `node_modules/next/dist/docs` for version-matched Next.js documentation.

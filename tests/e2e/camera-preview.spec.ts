@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Story 1.3: Camera Preview Component', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/camera');
 
     const grantPermissionButton = page.getByRole('button', { name: /grant camera access/i });
     if (await grantPermissionButton.isVisible()) {
