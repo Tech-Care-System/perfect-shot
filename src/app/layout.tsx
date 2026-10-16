@@ -10,8 +10,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Perfect Shot",
+  title: "Perfect Shot",
+  applicationName: "Perfect Shot",
   description: "AI-guided photography coaching for perfect poses",
+  appleWebApp: { title: "Perfect Shot" },
+  icons: { apple: "/icon-192.png" },
 };
 
 export default function RootLayout({

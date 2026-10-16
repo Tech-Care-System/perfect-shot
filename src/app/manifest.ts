@@ -2,15 +2,15 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'AI Perfect Shot',
-    short_name: 'PerfectShot',
+    name: 'Perfect Shot',
+    short_name: 'Perfect Shot',
     description: 'AI-guided photography coaching for perfect poses',
     id: '/',
     start_url: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#0a0a0a',
-    theme_color: '#0a0a0a',
+    background_color: '#f8f5f0',
+    theme_color: '#f8f5f0',
     icons: [
       {
         src: '/icon-192.png',

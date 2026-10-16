@@ -1,6 +1,6 @@
-# AI Perfect Shot
+# Perfect Shot
 
-AI Perfect Shot is a photography PWA that uses the device camera and on-device pose detection to guide composition and capture. MediaPipe runs locally in a Web Worker; camera frames and photos are not uploaded by the app. Captured photos can be saved to the device.
+Perfect Shot is a photography PWA that uses the device camera and on-device pose detection to guide composition and capture. MediaPipe runs locally in a Web Worker; camera frames and photos are not uploaded by the app. Captured photos can be saved to the device.
 
 ## Requirements
 

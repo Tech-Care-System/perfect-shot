@@ -1,6 +1,6 @@
 # Agent guidance
 
-AI Perfect Shot is an on-device photography PWA built with the Next.js App Router, React, TypeScript, Tailwind CSS, Jotai, and MediaPipe running in a Web Worker.
+Perfect Shot is an on-device photography PWA built with the Next.js App Router, React, TypeScript, Tailwind CSS, Jotai, and MediaPipe running in a Web Worker.
 
 Keep camera frames and pose processing on the device. Preserve clear camera permission flows, accessible controls, keyboard support, and reduced-motion behavior.
 
