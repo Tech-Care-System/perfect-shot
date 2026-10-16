@@ -1,9 +1,9 @@
 'use client';
 
-import { cameraFacingModeAtom, cameraFitModeAtom } from '@/lib/stores/camera-store';
+import { cameraFacingModeAtom, cameraFitModeAtom, cameraStatusAtom } from '@/lib/stores/camera-store';
 import { targetPoseAtom } from '@/lib/stores/pose-store';
-import { cn } from '@/lib/utils';
 import { drawPoseSilhouette } from '@/lib/utils/drawing';
+import { projectReferencePose, type PoseGuideFrame } from '@/lib/utils/pose-projection';
 import { useAtomValue } from 'jotai';
 import { useEffect, useRef } from 'react';
 
@@ -13,18 +13,38 @@ const TARGET_SILHOUETTE_STYLE = {
   lineWidth: 1.5,
 };
 
-function getObjectFitMappingStyle(canvas: HTMLCanvasElement, fitMode: 'cover' | 'contain') {
-  const parent = canvas.parentElement;
-  if (!parent) return {};
+function getGuideFrame(canvas: HTMLCanvasElement, fitMode: 'cover' | 'contain'): PoseGuideFrame {
+  const parent = canvas.parentElement!;
+  const viewport = parent.getBoundingClientRect();
+  let left = 0;
+  let top = 0;
+  let right = canvas.width;
+  let bottom = canvas.height;
+  const video = parent.querySelector<HTMLVideoElement>('video[data-testid="camera-video"]');
+  if (fitMode === 'contain' && video && video.videoWidth > 0 && video.videoHeight > 0) {
+    const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+    const width = video.videoWidth * scale;
+    const height = video.videoHeight * scale;
+    left = (canvas.width - width) / 2;
+    top = (canvas.height - height) / 2;
+    right = left + width;
+    bottom = top + height;
+  }
 
-  const video = parent.querySelector('video[data-testid="camera-video"]') as HTMLVideoElement | null;
-  if (!video || video.videoWidth <= 0 || video.videoHeight <= 0) return {};
-
-  return {
-    objectFit: fitMode,
-    sourceWidth: video.videoWidth,
-    sourceHeight: video.videoHeight,
-  };
+  const screen = canvas.closest('[data-testid="camera-screen"]');
+  const header = screen?.querySelector('[data-testid="camera-header"]')?.getBoundingClientRect();
+  const controls = screen?.querySelector('[data-testid="camera-controls"]')?.getBoundingClientRect();
+  const hint = screen?.querySelector('[data-testid="pose-hint-card"]')?.getBoundingClientRect();
+  if (header?.height) top = Math.max(top, header.bottom - viewport.top + 12);
+  if (controls?.height) bottom = Math.min(bottom, controls.top - viewport.top - 12);
+  if (hint?.height) {
+    if (canvas.width > canvas.height && canvas.height <= 500) {
+      left = Math.max(left, hint.right - viewport.left + 12);
+    } else {
+      bottom = Math.min(bottom, hint.top - viewport.top - 12);
+    }
+  }
+  return { x: left, y: top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
 }
 
 
@@ -32,6 +52,7 @@ export function WireframeCanvas() {
   const targetPose = useAtomValue(targetPoseAtom);
   const facingMode = useAtomValue(cameraFacingModeAtom);
   const fitMode = useAtomValue(cameraFitModeAtom);
+  const cameraStatus = useAtomValue(cameraStatusAtom);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isMirrored = facingMode === 'user';
 
@@ -63,10 +84,9 @@ export function WireframeCanvas() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const mappingStyle = getObjectFitMappingStyle(canvas, fitMode);
-
       if (targetPose && targetPose.length > 0) {
-        drawPoseSilhouette(ctx, targetPose, { ...TARGET_SILHOUETTE_STYLE, ...mappingStyle });
+        const projected = projectReferencePose(targetPose, canvas.width, canvas.height, getGuideFrame(canvas, fitMode), isMirrored);
+        drawPoseSilhouette(ctx, projected, TARGET_SILHOUETTE_STYLE);
       }
     };
 
@@ -77,6 +97,9 @@ export function WireframeCanvas() {
       : null;
     if (observer) {
       observer.observe(parent);
+      canvas.closest('[data-testid="camera-screen"]')
+        ?.querySelectorAll('[data-testid="camera-header"], [data-testid="camera-controls"], [data-testid="pose-hint-card"]')
+        .forEach((element) => observer.observe(element));
     }
 
     window.addEventListener('resize', draw);
@@ -89,16 +112,13 @@ export function WireframeCanvas() {
       video?.removeEventListener('loadedmetadata', draw);
       video?.removeEventListener('resize', draw);
     };
-  }, [targetPose, fitMode]);
+  }, [targetPose, fitMode, isMirrored, cameraStatus]);
 
   return (
     <canvas
       ref={canvasRef}
       data-testid="wireframe-canvas"
-      className={cn(
-        'pointer-events-none absolute inset-0 h-full w-full z-10',
-        isMirrored ? 'scale-x-[-1]' : 'scale-x-100'
-      )}
+      className="pointer-events-none absolute inset-0 h-full w-full z-10"
     />
   );
 }

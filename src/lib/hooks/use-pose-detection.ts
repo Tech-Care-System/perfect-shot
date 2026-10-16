@@ -14,6 +14,7 @@ import {
 import { liteModeAtom } from '@/lib/stores/settings-store';
 import { calculatePoseSimilarity } from '@/lib/utils/calculate-similarity';
 import { generateCorrection } from '@/lib/utils/generate-correction';
+import { normalizeCameraPose } from '@/lib/utils/pose-projection';
 import { logger } from '@/lib/utils/logger';
 import { useAtomValue, useSetAtom } from 'jotai';
 
@@ -56,6 +57,7 @@ export function usePoseDetection() {
   const detectionInFlightRef = useRef(false);
   const stoppedDetectionResponsesRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const detectionFrameSizeRef = useRef<{ width: number; height: number } | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const lastProcessedTimeRef = useRef(-1);
   const lastSentTimestampRef = useRef(0);
@@ -94,10 +96,12 @@ export function usePoseDetection() {
 
         const target = targetPoseRef.current;
         if (target && response.payload.landmarks?.[0]) {
-          const score = calculatePoseSimilarity(response.payload.landmarks[0], target);
+          const frame = detectionFrameSizeRef.current;
+          const detected = normalizeCameraPose(response.payload.landmarks[0], frame?.width ?? 0, frame?.height ?? 0);
+          const score = calculatePoseSimilarity(detected, target);
           setPoseScore(score);
           if (score < POSE_THRESHOLD) {
-            setPoseCorrection(generateCorrection(response.payload.landmarks[0], target));
+            setPoseCorrection(generateCorrection(detected, target));
           } else {
             setPoseCorrection(null);
           }
@@ -208,6 +212,7 @@ export function usePoseDetection() {
            * The imageBitmap becomes unusable in the main thread after this call.
            */
           detectionInFlightRef.current = true;
+          detectionFrameSizeRef.current = { width: imageBitmap.width, height: imageBitmap.height };
           const sent = postMessage(
             {
               type: 'DETECT',

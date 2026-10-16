@@ -64,6 +64,7 @@ export function ControlBar({
 
   return (
     <div
+      data-testid="camera-controls"
       className="fixed inset-x-0 bottom-0 z-30 flex justify-center bg-[#f8f5f0] text-[#11120d] shadow-[0_-8px_32px_rgba(17,18,13,0.12)]"
       style={{
         height:

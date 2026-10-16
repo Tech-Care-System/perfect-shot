@@ -3,7 +3,11 @@ import {
     detectionLostAtom,
     poseFpsAtom,
     poseResultAtom,
+    poseScoreAtom,
+    poseCorrectionAtom,
+    targetPoseAtom,
 } from '@/lib/stores/pose-store';
+import standingPoses from '@/data/poses/standing.json';
 import type { AIWorkerResponse } from '@/lib/ai/worker.types';
 import { liteModeAtom } from '@/lib/stores/settings-store';
 import { act, renderHook } from '@testing-library/react';
@@ -82,6 +86,9 @@ describe('usePoseDetection', () => {
     mockStore.set(detectionLostAtom, false);
     mockStore.set(detectionErrorAtom, null);
     mockStore.set(liteModeAtom, false);
+    mockStore.set(targetPoseAtom, null);
+    mockStore.set(poseScoreAtom, 0);
+    mockStore.set(poseCorrectionAtom, null);
   });
 
   afterEach(() => {
@@ -90,6 +97,41 @@ describe('usePoseDetection', () => {
   });
 
   // ── AC1: Loop mechanics ────────────────────────────────────────
+
+  it.each([[1920, 1080], [640, 480], [1080, 1920]])(
+    'matches the same physical pose from a %ix%i frame even after video metadata changes',
+    async (width, height) => {
+      let onMessage: ((response: AIWorkerResponse) => boolean | void) | null = null;
+      (useAIWorker as jest.Mock).mockImplementation((options) => {
+        onMessage = options.onMessage;
+        return { postMessage: mockPostMessage, workerStatus: 'ready', error: null, restartWorker: mockRestartWorker };
+      });
+      global.createImageBitmap = jest.fn().mockResolvedValue({ width, height, close: mockBitmapClose });
+      const target = standingPoses[0].targetLandmarks;
+      mockStore.set(targetPoseAtom, target);
+      const factor = (9 / 16) / (width / height);
+      const detected = target.map((point) => ({
+        ...point, x: (point.x - 0.5) * factor + 0.5, z: point.z * factor,
+      }));
+      const video = createReadyVideo({ videoWidth: width, videoHeight: height });
+      const { result } = renderHook(() => usePoseDetection());
+      await act(async () => {
+        result.current.startDetection(video);
+        await Promise.resolve();
+      });
+      Object.defineProperty(video, 'videoWidth', { value: height });
+      Object.defineProperty(video, 'videoHeight', { value: width });
+      act(() => {
+        onMessage?.({
+          type: 'POSE_RESULT',
+          payload: { landmarks: [detected], worldLandmarks: [], close: () => {} },
+        });
+      });
+      expect(mockStore.get(poseScoreAtom)).toBeCloseTo(1, 6);
+      expect(mockStore.get(poseCorrectionAtom)).toBeNull();
+      expect(mockStore.get(poseResultAtom)?.landmarks[0]).toBe(detected);
+    }
+  );
 
   it('starts detection and sends DETECT message when video is ready', async () => {
     const { result } = renderHook(() => usePoseDetection());

@@ -118,8 +118,8 @@ export function CameraScreen() {
   const isSwitching = status === "loading";
 
   return (
-    <div className={styles.live}>
-      <header className={styles.liveHeader}>
+    <div className={styles.live} data-testid="camera-screen">
+      <header className={styles.liveHeader} data-testid="camera-header">
         <Link href="/" className={styles.brand} aria-label="Perfect Shot home">
           <Image
             src="/icon-192.png"
