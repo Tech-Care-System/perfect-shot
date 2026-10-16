@@ -18,6 +18,8 @@ Keep the MediaPipe WASM runtime in `public/wasm` and the pose model at `public/m
 
 `pnpm typecheck` runs Next.js type generation before TypeScript checks. Useful checks:
 
+Keep checks local: pre-commit runs lint and formatting on staged files; pre-push runs lint and unit tests. Do not add GitHub Actions CI/CD workflows. Run type checks, browser tests, and production builds manually when the change warrants them, and deploy through EasyPanel after pushing.
+
 ```sh
 pnpm typecheck
 pnpm lint

@@ -27,6 +27,8 @@ After dependency changes, keep the MediaPipe runtime and model aligned with the 
 
 ## Checks
 
+Checks run locally. The pre-commit hook lints and formats staged source files and formats staged JSON, Markdown, and CSS files. The pre-push hook runs lint and unit tests. This repository has no GitHub Actions workflows.
+
 ```sh
 pnpm typecheck
 pnpm lint
@@ -55,4 +57,4 @@ docker build -t ai-perfect-shot .
 docker run --rm -p 3000:3000 ai-perfect-shot
 ```
 
-EasyPanel deployment is optional. The GitHub Actions CD workflow triggers an EasyPanel deployment after CI succeeds on `main`; configure the repository Actions secret `EASYPANEL_DEPLOY_WEBHOOK_URL` with the deployment webhook URL to enable it.
+Deploy manually from EasyPanel after pushing to `main`. Its source should point to `https://github.com/Tech-Care-System/perfect-shot.git`, branch `main`, using the root Dockerfile.
